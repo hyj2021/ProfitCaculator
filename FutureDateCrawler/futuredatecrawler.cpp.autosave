@@ -1,0 +1,40 @@
+#include "futuredatecrawler.h"
+
+NetWorker::NetWorker(QObject* parent) :
+    QObject(parent),
+    d(new NetWorker::Private(this))
+{
+    connect(d->manager, &QNetworkAccessManager::finished, this, &NetWorker::finished);//信号转发
+}
+//内部类
+class NetWorker::Private
+{
+public:
+    //传入FutureDateCrawler指针，使其成为QNetWorkAccessManager的parent，可以自动析构
+    Private(NetWorker *q) : manager(new QNetworkAccessManager(q))
+    {
+    }
+    QNetworkAccessManager* manager;
+};
+
+NetWorker *NetWorker::instance()
+{
+    static NetWorker futureDateCrawler;
+    return &futureDateCrawler;
+}
+NetWorker::~NetWorker()
+{
+    delete d;
+    d = 0;
+}
+
+QByteArray NetWorker::get(const QString& url)
+{
+    d->manager->get(QNetworkRequest(QUrl(url)));
+    QEventLoop eventLoop;
+    connect(this, &NetWorker::finished, &eventLoop, QEventLoop::quit);//抓取结束才结束事件循环
+
+    //获取html代码
+}
+
+
